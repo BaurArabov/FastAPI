@@ -12,7 +12,7 @@ from . import router
 
 
 class GetShanyrakResponse(AppModel):
-    shanyrak_id: Any = Field(alias="shanyrak_id")
+    shanyrak_id: Any = Field(alias="_id")
     type: str = ""
     price: int = 0
     address: str = ""
