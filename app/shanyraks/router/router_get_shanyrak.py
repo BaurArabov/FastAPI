@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 from fastapi import Depends, Response
 from pydantic import Field
@@ -19,9 +19,11 @@ class GetShanyrakResponse(AppModel):
     area: float = 0
     rooms_count: int = 0
     description: str = ""
+    media: List[str] = []
+    comments: List[str] = []
 
 
-@router.get("/{shanyrak_id:str}", response_model=GetShanyrakResponse)
+@router.get("/{shanyrak_id}", response_model=GetShanyrakResponse)
 def get_shanyrak_by_id(
     shanyrak_id: str,
     jwt_data: JWTData = Depends(parse_jwt_user_data),
@@ -30,4 +32,8 @@ def get_shanyrak_by_id(
     shanyrak = svc.repository.get_shanyrak(shanyrak_id)
     if shanyrak is None:
         return Response(status_code=404)
+    
+    comments = shanyrak.get("comments", [])
+    shanyrak["comments"] = [str(comment) for comment in comments]
+    
     return GetShanyrakResponse(**shanyrak)

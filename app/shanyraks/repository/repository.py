@@ -26,14 +26,12 @@ class ShanyraksRepository:
         return insert_result.inserted_id
 
     def get_shanyrak(self, shanyrak_id: str) -> List[dict]:
-        shanyrak = self.database["shanyraks"].find_one(
-            {
-                "_id": ObjectId(shanyrak_id)
-            }
-        )
+        shanyrak = self.database["shanyraks"].find_one({"_id": ObjectId(shanyrak_id)})
         return shanyrak
 
-    def update_shanyrak(self, user_id: str, shanyrak_id: str, data: dict[str, Any]) -> UpdateResult:
+    def update_shanyrak(
+        self, user_id: str, shanyrak_id: str, data: dict[str, Any]
+    ) -> UpdateResult:
         updated_shanyrak = self.database["shanyraks"].update_one(
             filter={"_id": ObjectId(shanyrak_id), "user_id": ObjectId(user_id)},
             update={
@@ -42,9 +40,62 @@ class ShanyraksRepository:
         )
 
         return updated_shanyrak
-    
+
     def delete_shanyrak(self, user_id: str, shanyrak_id: str) -> DeleteResult:
         deleted_shanyrak = self.database["shanyraks"].delete_one(
             {"_id": ObjectId(shanyrak_id), "user_id": ObjectId(user_id)}
         )
         return deleted_shanyrak
+
+    def add_media_to_shanyrak(self, user_id: str, shanyrak_id: str, data: str):
+        return self.database["shanyraks"].update_one(
+            filter={"_id": ObjectId(shanyrak_id), "user_id": ObjectId(user_id)},
+            update={"$push": {"media": data}},
+        )
+
+    def delete_media_from_shanyrak(self, user_id: str, shanyrak_id: str, data: str):
+        shanyrak = self.database["shanyraks"].find_one(
+            {"_id": ObjectId(shanyrak_id), "user_id": ObjectId(user_id)}
+        )
+        if shanyrak:
+            media = shanyrak.get("media", [])
+            media.remove(data)
+            self.database["shanyraks"].update_one(
+                {"_id": ObjectId(shanyrak_id), "user_id": ObjectId(user_id)},
+                {"$set": {"media": media}},
+            )
+
+    def add_comment_to_shanyrak(self, user_id: str, shanyrak_id: str, comment: str):
+        insert_comment = {
+            "_id": str(ObjectId()),
+            "content": comment,
+            "created_at": datetime.utcnow(),
+            "user_id": user_id,
+        }
+
+        return self.database["shanyraks"].update_one(
+            filter={"_id": ObjectId(shanyrak_id), "user_id": ObjectId(user_id)},
+            update={"$push": {"comments": insert_comment}},
+        )
+
+    def get_comments(self, shanyrak_id: str):
+        shanyrak = self.database["shanyraks"].find_one({"_id": ObjectId(shanyrak_id)})
+        return shanyrak["comments"]
+
+    def update_comment(
+        self, comment_id: str, shanyrak_id: str, user_id: str, content: str
+    ):
+        filter = {
+            "_id": ObjectId(shanyrak_id),
+            "comments": {"$elemMatch": {"_id": comment_id, "user_id": user_id}},
+        }
+        update = {"$set": {"comments.$.content": content}}
+
+        updated_shanyrak = self.database["shanyraks"].update_one(filter, update)
+        return updated_shanyrak
+
+    def delete_comment(self, shanyrak_id: str, comment_id: str):
+        self.database["shanyraks"].update_one(
+            {"_id": ObjectId(shanyrak_id)},
+            {"$pull": {"comments": {"_id": comment_id}}}
+        )

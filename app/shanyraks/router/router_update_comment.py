@@ -9,24 +9,16 @@ from ..service import Service, get_service
 from . import router
 
 
-class UpdateShanyrakRequest(AppModel):
-    type: str
-    price: int
-    address: str
-    area: float
-    rooms_count: int
-    description: str
-
-
-@router.patch("/{shanyrak_id}")
-def update_shanyrak(
+@router.patch("/{shanyrak_id}/comments")
+def update_comment(
     shanyrak_id: str,
-    input: UpdateShanyrakRequest,
+    comment_id: str,
+    content: str,
     jwt_data: JWTData = Depends(parse_jwt_user_data),
     svc: Service = Depends(get_service),
 ):
     user_id = jwt_data.user_id
-    update_result = svc.repository.update_shanyrak(user_id, shanyrak_id, input.dict())
+    update_result = svc.repository.update_comment(comment_id, shanyrak_id, user_id, content)
     if update_result.modified_count == 1:
         return Response(status_code=200)
     return Response(status_code=404)
