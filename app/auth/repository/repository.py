@@ -46,3 +46,56 @@ class AuthRepository:
                 }
             },
         )
+
+    def create_fav(self, user_id: str, shanyrak_id: str):
+        favorites = self.get_favorites(user_id)
+        if shanyrak_id not in favorites:
+            favorites.append(shanyrak_id)
+
+        self.database["users"].update_one(
+            filter={"_id": ObjectId(user_id)},
+            update={
+                "$set": {
+                    "favorite": favorites,
+                }
+            },
+        )
+
+    def get_favorites(self, user_id: str):
+        user = self.database["users"].find_one(
+            {
+                "_id": ObjectId(user_id)
+            }
+        )
+        return user["favorite"] if "favorite" in user else []
+    
+    def get_shanyrak_fav(self, user_id: str):
+        shanyrak_ids = self.get_favorites(user_id)
+        list_shanyrak_id = [ObjectId(shanyrak_id) for shanyrak_id in shanyrak_ids] 
+        shanyraks = self.database["shanyraks"].find(
+            {
+                "_id": {"$in": list_shanyrak_id}
+            }
+        )
+        return list(shanyraks)
+    
+    def delete_favorite(self, user_id: str, shanyrak_id: str):
+        favorites = self.get_favorites(user_id)
+        if shanyrak_id in favorites:
+            favorites.remove(shanyrak_id)
+        
+        self.database["users"].update_one(
+            filter={"_id": ObjectId(user_id)},
+            update={
+                "$set": {
+                    "favorite": favorites,
+                }
+            },
+        )
+
+    def add_avatar(self, user_id: str, data: str):
+        return self.database["shanyraks"].update_one(
+            filter={"_id": ObjectId(user_id)},
+            update={"$push": {"avatar_url": data}},
+        )
+        

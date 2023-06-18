@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 from fastapi import Depends
 from pydantic import Field
@@ -17,6 +17,7 @@ class GetMyAccountResponse(AppModel):
     phone: str = ""
     name: str = ""
     city: str = ""
+    favorite: List[Any]
 
 
 @router.get("/users/me", response_model=GetMyAccountResponse)
